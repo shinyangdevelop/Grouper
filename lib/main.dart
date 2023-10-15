@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -275,7 +277,10 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
+  BuildContext? _context;
+
   showAlertDialog(title, message, [context]) {
+    context = context ?? _context!;
     // set up the button
     Widget okButton = TextButton(
       child: Text("OK"),
@@ -309,6 +314,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
+    _context = context;
     return Scaffold(
       body: Container(
         margin: EdgeInsets.all(30),
@@ -371,28 +377,30 @@ class _RegisterPageState extends State<RegisterPage> {
                   return;
                 }
                 final supabase = Supabase.instance.client;
-                try {
-                  supabase.from('users').insert([
-                    {
-                      'email': emailController.text,
-                      'name': nameController.text,
-                      'password': passwordController.text,
-                    }
-                  ]).then((value) {
-                    print(value);
-                    print('a');
-                    Navigator.pop(context, {'registerSuccess': true});
-                  });
-                } on PostgrestException catch (e) {
-                  print('e');
-                  print(e);
-                  showAlertDialog('Error', 'Email or Username already exists.');
-                  return;
-                } catch (e) {
-                  print('e');
-                  print(e);
-                  return showAlertDialog('Fatal Error', '');
-                }
+                supabase.from('users').insert([
+                  {
+                    'email': emailController.text,
+                    'name': nameController.text,
+                    'password': passwordController.text,
+                  }
+                ]).then((value) {
+                  print(value);
+                  print('a');
+                  Navigator.pop(context, {'registerSuccess': true});
+                }).catchError((e) {
+                  print(e.toString());
+                  if (e.toString().contains(
+                      'PostgrestException(message: duplicate key value violates unique constraint "users_email_key", code: 23505')) {
+                    showAlertDialog('Register Failed',
+                        'Email that you typed is already registered. Please try again.');
+                  } else if (e.toString().contains(
+                      'PostgrestException(message: duplicate key value violates unique constraint "users_name_key", code: 23505')) {
+                    showAlertDialog('Register Failed',
+                        'Name that you typed is already registered. Please try again.');
+                  } else {
+                    print(e);
+                  }
+                });
               },
               child: Text('Ok'),
             ),
