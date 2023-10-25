@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # grouper
 
 A new Flutter project.
@@ -15,7 +14,3 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
-=======
-# Grouper
-Grouper is an application that helps to manage groups easily.
->>>>>>> c71414d0e4b122ac59f02f1f7fb4c64a20953ede

@@ -1,0 +1,3 @@
+groupInfo -> GroupName, GroupID, Group's users
+groupChat -> GroupChatID, GroupID, Content, Timestamp
+groupPlan -> GroupPlanID, GroupID, Date, Content
