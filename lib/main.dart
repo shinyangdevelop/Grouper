@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:async';
 import 'package:grouper/loginPage.dart';
+import 'package:grouper/registerPage.dart';
 
 Future<void> main() async {
   await dotenv.load(fileName: '/config/.ENV');
@@ -18,12 +19,18 @@ class Grouper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('welcome');
     return MaterialApp(
       title: 'Grouper',
+      initialRoute: '/main',
+      routes: {
+        '/main': (context) => MainPage(),
+        '/login': (context) => LoginPage(),
+        '/register': (context) => RegisterPage(),
+      },
       theme: ThemeData(
         brightness: Brightness.dark,
       ),
-      home: MainPage(),
     );
   }
 }
@@ -39,14 +46,26 @@ class _MainPageState extends State<MainPage> {
   bool isLoggedIn = false;
   String userName = '';
   int userId = -1;
+  int users = 0;
+  List<int> groups = [];
+  final supabase = Supabase.instance.client;
 
   @override
   void initState() {
     super.initState();
-    loadAppStatus();
+    loadLoginStatus();
   }
 
-  Future<void> loadAppStatus() async {
+  Future<void> loadGroups() async {
+    final response = await supabase
+        .from('users')
+        .select('joined_groups')
+        .eq('id', userId);
+    groups = response.data[0]['joined_groups'];
+    print(response);
+  }
+
+  void loadLoginStatus() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       isLoggedIn = (prefs.getBool('loginStatus') ?? false);
@@ -55,7 +74,7 @@ class _MainPageState extends State<MainPage> {
     });
   }
 
-  Future<void> updateAppStatus(
+  Future<void> updateLoginStatus(
       bool loginStatus, int? userId_, String? userName_) async {
     final prefs = await SharedPreferences.getInstance();
     if (loginStatus) {
@@ -79,10 +98,12 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
-    loadAppStatus();
+    print('build begin');
     if (!isLoggedIn) {
+      print('redirect to loginPage');
       return LoginPage();
     }
+    loadGroups();
     return Scaffold(
       appBar: AppBar(
         title: Text('Grouper'),
@@ -101,7 +122,9 @@ class _MainPageState extends State<MainPage> {
           IconButton(
             icon: Icon(Icons.logout),
             onPressed: () async {
-              updateAppStatus(false, null, null);
+              print('logout');
+              updateLoginStatus(false, null, null);
+              Navigator.pushNamed(context, '/login');
             },
           ),
         ],
@@ -114,6 +137,7 @@ class _MainPageState extends State<MainPage> {
                 child: ListView.builder(
                     itemCount: 100,
                     itemBuilder: (BuildContext context, int index) {
+
                       return Container(
                         height: 50,
                         margin: EdgeInsets.fromLTRB(25, 15, 25, 15),

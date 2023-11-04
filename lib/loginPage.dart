@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:async';
 import 'package:grouper/registerPage.dart';
 
@@ -17,7 +16,7 @@ class _LoginPageState extends State<LoginPage> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
-  Future<void> updateAppStatus(
+  Future<void> updateLoginStatus(
       bool loginStatus, int? userId_, String? userName_) async {
     final prefs = await SharedPreferences.getInstance();
     if (loginStatus) {
@@ -31,6 +30,7 @@ class _LoginPageState extends State<LoginPage> {
       prefs.remove('userId');
       prefs.remove('userName');
     }
+    print('updateStatus done');
   }
 
   showAlertDialog() {
@@ -123,12 +123,14 @@ class _LoginPageState extends State<LoginPage> {
                     emailController.text, passwordController.text);
                 if (loginSuccess['success']) {
                   print('${loginSuccess['userId']} ${loginSuccess['name']}');
-                  updateAppStatus(
+                  await updateLoginStatus(
                       true, loginSuccess['userId'], loginSuccess['name']);
+                  Navigator.pushNamed(context, '/main'); //TODO: improve this method => not to use context across async gaps
                 } else {
-                  updateAppStatus(false, null, null);
+                  updateLoginStatus(false, null, null);
                   showAlertDialog();
                 }
+
               },
               child: Text('Confirm'),
             ),
