@@ -102,7 +102,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 onPressed: () async {
                   if (!RegExp(
-                      r"^[a-zA-Z0-9.a-zA-Z0-9!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
+                          r"^[a-zA-Z0-9.a-zA-Z0-9!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
                       .hasMatch(emailController.text)) {
                     showAlertDialog('Incorrect Email',
                         'The email that you typed is not correct. Please try again.');

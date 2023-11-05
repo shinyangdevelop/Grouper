@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:async';
-import 'package:grouper/loginPage.dart';
-import 'package:grouper/registerPage.dart';
+import 'package:grouper/login_page.dart';
+import 'package:grouper/register_page.dart';
 
 Future<void> main() async {
   await dotenv.load(fileName: '/config/.ENV');
@@ -12,6 +13,19 @@ Future<void> main() async {
       url: dotenv.env['URL']!, anonKey: dotenv.env['Key']!);
 
   runApp(Grouper());
+}
+
+class Group {
+  final String groupName;
+  final String groupCode;
+  final int groupId;
+
+  Group(this.groupId, this.groupName, this.groupCode);
+
+  @override
+  String toString() {
+    return 'Group: $groupName, $groupCode, $groupId';
+  }
 }
 
 class Grouper extends StatelessWidget {
@@ -47,7 +61,7 @@ class _MainPageState extends State<MainPage> {
   String userName = '';
   int userId = -1;
   int users = 0;
-  List<int> groups = [];
+  List<Group> groups = [];
   final supabase = Supabase.instance.client;
 
   @override
@@ -56,13 +70,19 @@ class _MainPageState extends State<MainPage> {
     loadLoginStatus();
   }
 
-  Future<void> loadGroups() async {
+  Future<List<Group>> loadGroups() async {
+    List<Group> temp = [];
     final response = await supabase
-        .from('users')
-        .select('joined_groups')
-        .eq('id', userId);
-    groups = response.data[0]['joined_groups'];
-    print(response);
+        .from('user_group_link')
+        .select('groupid, groups(group_name, group_code)')
+        .eq('userid', userId);
+    for (var i in response) {
+      temp.add(Group(
+          i['groupid'], i['groups']['group_name'], i['groups']['group_code']));
+    }
+    print(temp);
+    groups = temp;
+    return temp;
   }
 
   void loadLoginStatus() async {
@@ -131,20 +151,68 @@ class _MainPageState extends State<MainPage> {
       ),
       body: Align(
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Expanded(
-                child: ListView.builder(
-                    itemCount: 100,
-                    itemBuilder: (BuildContext context, int index) {
-
-                      return Container(
-                        height: 50,
-                        margin: EdgeInsets.fromLTRB(25, 15, 25, 15),
-                        color: Colors.grey[900],
-                        child: Center(child: Text('Entry ${index + 1}')),
-                      );
-                    }))
+              child: FutureBuilder<List<Group>>(
+                future: loadGroups(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    return ListView.builder(
+                      itemCount: groups.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        return GestureDetector(
+                          onTap: () {
+                            print('tapped');
+                            Navigator.pushNamed(context, '/group',
+                                arguments: groups[index]);
+                          },
+                          child: Container(
+                            margin: EdgeInsets.fromLTRB(25, 15, 25, 15),
+                            padding: EdgeInsets.fromLTRB(10, 25, 25, 10),
+                            color: Colors.grey[900],
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                              Expanded(
+                                flex: 2,
+                                child: Align(
+                                  alignment: Alignment.topCenter,
+                                  child: Text(
+                                    groups[index].groupName,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 24,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Expanded(flex: 5, child: Container()),
+                              Expanded(
+                                flex: 1,
+                                child: Align(
+                                  alignment: Alignment.bottomRight,
+                                  child: Text(
+                                    'Group code: ${groups[index].groupCode}',
+                                    textAlign: TextAlign.right,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ]),
+                            ));
+                      });
+                } else if (snapshot.hasError) {
+                  return Text('${snapshot.error}');
+                }
+                return const SpinKitWave(
+                  color: Colors.white,
+                  size: 50.0,
+                );
+              },
+            )),
           ],
         ),
       ),

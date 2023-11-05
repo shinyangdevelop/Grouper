@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:async';
-import 'package:grouper/registerPage.dart';
-
+import 'package:grouper/register_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -125,12 +124,12 @@ class _LoginPageState extends State<LoginPage> {
                   print('${loginSuccess['userId']} ${loginSuccess['name']}');
                   await updateLoginStatus(
                       true, loginSuccess['userId'], loginSuccess['name']);
-                  Navigator.pushNamed(context, '/main'); //TODO: improve this method => not to use context across async gaps
+                  Navigator.pushNamed(context,
+                      '/main'); //TODO: improve this method => not to use context across async gaps
                 } else {
                   updateLoginStatus(false, null, null);
                   showAlertDialog();
                 }
-
               },
               child: Text('Confirm'),
             ),
