@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:grouper/util.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'dart:async';
 import 'package:grouper/register_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -14,23 +13,6 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
-
-  Future<void> updateLoginStatus(
-      bool loginStatus, int? userId_, String? userName_) async {
-    final prefs = await SharedPreferences.getInstance();
-    if (loginStatus) {
-      setState(() {
-        prefs.setBool('loginStatus', true);
-        prefs.setInt('userId', userId_!);
-        prefs.setString('userName', userName_!);
-      });
-    } else {
-      prefs.setBool('loginStatus', false);
-      prefs.remove('userId');
-      prefs.remove('userName');
-    }
-    print('updateStatus done');
-  }
 
   showAlertDialog() {
     // set up the button
@@ -62,31 +44,7 @@ class _LoginPageState extends State<LoginPage> {
 
   final supabase = Supabase.instance.client;
 
-  Future<Map<String, dynamic>> checkLoginData(
-      String email, String password) async {
-    final data = await supabase
-        .from('users')
-        .select('id,password,name')
-        .eq('email', email);
-    try {
-      if (data.length == 0) {
-        return {'success': false};
-      } else {
-        if (data[0]['password'] == password) {
-          return {
-            'success': true,
-            'userId': data[0]['id'],
-            'name': data[0]['name']
-          };
-        } else {
-          return {'success': false};
-        }
-      }
-    } catch (e) {
-      print(e.toString());
-      return {'success': false};
-    }
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -118,16 +76,16 @@ class _LoginPageState extends State<LoginPage> {
             ),
             OutlinedButton(
               onPressed: () async {
-                var loginSuccess = await checkLoginData(
+                var loginSuccess = await Util.checkLoginData(
                     emailController.text, passwordController.text);
                 if (loginSuccess['success']) {
                   print('${loginSuccess['userId']} ${loginSuccess['name']}');
-                  await updateLoginStatus(
+                  await Util.updateLoginStatus(
                       true, loginSuccess['userId'], loginSuccess['name']);
                   Navigator.pushNamed(context,
                       '/main'); //TODO: improve this method => not to use context across async gaps
                 } else {
-                  updateLoginStatus(false, null, null);
+                  await Util.updateLoginStatus(false, null, null);
                   showAlertDialog();
                 }
               },
